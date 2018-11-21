@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<title>Facetracker</title>
+	<meta charset="utf-8">
+	<style>
+		*{
+			padding: 0;
+			margin: 0;
+
+		}
+		html{
+			padding-top: 40px;
+			background: #000;
+		}
+		#container{
+			width:800px;
+			height: 600px;
+			margin:0 auto;
+			position: relative;
+		}
+		#stats{
+			position: fixed;
+			left: 0;
+			top: 0;
+		}
+		
+		#overlay{
+			display: none;
+		}
+		#sendingView{
+			display: none;
+			position: absolute;
+			top:50%;
+			left: 50%;
+			background: #fff;
+			opacity: 0;
+			width: 100px;
+			height: 100px;
+			margin-left: -50px;
+			margin-top: -50px;
+			border-radius: 10px;
+		}
+
+		#sendingView p{
+			text-align: center;
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			opacity:0;
+		}
+		#complete{
+			width: 62px;
+			height: 10px;
+			margin-left: -31px;
+			margin-top: -14px;
+		}
+		#uploading{
+			width: 71px;
+			height: 10px;
+			margin-left: -35px;
+			margin-top: -14px;
+		}
+		#shotView{
+			background: #fff;
+			width: 100%;
+			height: 100%;
+			position:absolute;
+			left: 0;
+			top: 0;
+			opacity: 0
+
+		}
+		#overlay, #webgl {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			-o-transform : scaleX(-1);
+			-webkit-transform : scaleX(-1);
+			transform : scaleX(-1);
+			-ms-filter : fliph; /*IE*/
+			filter : fliph; /*IE*/
+		}
+
+		#videoel {
+			-o-transform : scaleX(-1);
+			-webkit-transform : scaleX(-1);
+			transform : scaleX(-1);
+			-ms-filter : fliph; /*IE*/
+			filter : fliph; /*IE*/
+		}
+		#shotImg{
+			width: 100%;
+			height: 100%;
+			position:absolute;
+			left: 0;
+			top: 0;
+		}
+		#frame{
+			width: 800px;
+			height: 600px;
+			position: absolute;
+			left: 0;
+			top: 0;
+			-webkit-transform: scaleX(-1);
+		    -o-transform: scaleX(-1);
+		    -moz-transform: scaleX(-1);
+		    transform: scaleX(-1);
+		}
+
+		#frame img{
+			position: absolute;
+			left: 0;
+			top:0;
+			opacity: 0;
+		}
+		#frame img.currentFrame{
+			opacity: 1;
+		}
+
+		/*mask画像*/
+		.masks {
+			display: none;
+		}
+
+		.nogum {
+					display : none;
+		}
+		.hide {
+			display : none;
+		}
+
+		.nohide {
+			display : block;
+		}
+	</style>
+	<script src="./js/settings.js"></script>
+	<script src="./ext_js/utils.js"></script>
+	<script src="./ext_js/jsfeat-min.js"></script>
+	<script src="./ext_js/frontalface.js"></script>
+	<script src="./ext_js/jsfeat_detect.js"></script>
+	<script src="./ext_js/numeric-1.2.6.min.js"></script>
+	<script src="./ext_js/mosse.js"></script>
+	<script src="./ext_js/left_eye_filter.js"></script>
+	<script src="./ext_js/right_eye_filter.js"></script>
+	<script src="./ext_js/nose_filter.js"></script>
+	<script src="./models/model_pca_20_svm.js"></script>
+	<script src="./js/clm.js"></script>
+	<script src="./js/svmfilter_webgl.js"></script>
+	<script src="./js/svmfilter_fft.js"></script>
+	<script src="./js/mossefilter.js"></script>
+	<script src="./js/face_deformer.js"></script>
+	<script type="text/javascript" src="./js/vertices.js"></script>
+</head>
+
+<body>
+		<div id="content">
+			<div id="container">
+				<video id="videoel" width="800" height="600" preload="auto">
+					<!--<source src="./media/Capture_1_092.ogv" type="video/ogg"/>-->
+				</video>
+				<canvas id="overlay" width="800" height="600"></canvas>
+				<canvas id="webgl" width="800" height="600"></canvas>
+
+				<!-- FRAMEの設定 -->
+				<div id="frame">
+					<img id="frame0" src="./frame/frame0.png" height="600" width="800">
+					<img id="frame1" src="./frame/frame1.png" height="600" width="800">
+					<img id="frame2" src="./frame/frame2.png" height="600" width="800">
+					<img id="frame3" src="./frame/frame3.png" height="600" width="800">
+					<img id="frame4" src="./frame/frame4.png" height="600" width="800">
+					<img id="frame5" src="./frame/frame5.png" height="600" width="800">
+					<img id="frame6" src="./frame/frame6.png" height="600" width="800">
+					<img id="frame7" src="./frame/frame7.png" height="600" width="800">
+					<img id="frame8" src="./frame/frame8.png" height="600" width="800">
+					<img id="frame9" src="./frame/frame9.png" height="600" width="800">
+				</div>
+				<div id="shotImg"></div>
+			</div>
+			
+			<!-- MASK画像の設定 -->
+			<img id="imihumei" class="masks" src="./media/imihumei.png" height="800" width="600"></img>
+			<img id="hadaka" class="masks" src="./media/hadaka.png" height="800" width="600"></img>
+			<img id="cyberotaku" class="masks" src="./media/cyberotaku.png" height="800" width="600"></img>
+			<img id="girly" class="masks" src="./media/girly.png" height="800" width="600"></img>
+			<img id="hanamegane" class="masks" src="./media/hanamegane.png" height="800" width="600"></img>
+			<img id="hentai" class="masks" src="./media/hentai.png" height="800" width="600"></img>
+			<!-- <img id="hokuro" class="masks" src="./media/hokuro.png" height="800" width="600"></img> -->
+			<img id="tokumei" class="masks" src="./media/tokumei.png" height="800" width="600"></img>
+			<img id="joo" class="masks" src="./media/joo.png" height="800" width="600"></img>
+			<img id="kakurega" class="masks" src="./media/kakurega.png" height="800" width="600"></img>
+			<img id="kaogirl" class="masks" src="./media/kaogirl.png" height="800" width="600"></img>
+			
+			<script>
+				var vid = document.getElementById('videoel');
+				var overlay = document.getElementById('overlay');
+				var overlayCC = overlay.getContext('2d');
+				var faceAnimID;
+				var ctrack = new clm.tracker();
+				var lostCount = 0;
+				var tmpLostCount = 0;
+				ctrack.init(pModel);
+			
+				
+				//webカメラの準備完了
+				function enablestart() {
+					
+				}
+				
+				// check whether browser supports webGL
+				var webGLContext;
+				var webGLTestCanvas = document.createElement('canvas');
+				if (window.WebGLRenderingContext) {
+					webGLContext = webGLTestCanvas.getContext('webgl', {preserveDrawingBuffer: true}) || webGLTestCanvas.getContext('experimental-webgl', {preserveDrawingBuffer: true});
+					if (!webGLContext || !webGLContext.getExtension('OES_texture_float')) {
+						webGLContext = null;
+					}
+				}
+				if (webGLContext == null) {
+					alert("Your browser does not seem to support WebGL. Unfortunately this face mask example depends on WebGL, so you'll have to try it in another browser. :(");
+				}
+				
+				navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+				window.URL = window.URL || window.webkitURL || window.msURL || window.mozURL;
+				
+				// check for camerasupport
+				if (navigator.getUserMedia) {
+					// set up stream
+					// chrome 19 shim
+					var videoSelector = {video : true};
+					if (window.navigator.appVersion.match(/Chrome\/(.*?) /)) {
+						var chromeVersion = parseInt(window.navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
+						if (chromeVersion < 20) {
+							videoSelector = "video";
+						}
+					};
+					
+					navigator.getUserMedia(videoSelector, function( stream ) {
+						if (vid.mozCaptureStream) {
+							vid.mozSrcObject = stream;
+						} else {
+							vid.src = (window.URL && window.URL.createObjectURL(stream)) || stream;
+						}
+						vid.play();
+					}, function() {
+						
+						document.getElementById('gum').className = "hide";
+						document.getElementById('nogum').className = "nohide";
+						alert("There was some problem trying to fetch video from your webcam, using a fallback video instead.");
+					});
+				} else {
+					
+					document.getElementById('gum').className = "hide";
+					document.getElementById('nogum').className = "nohide";
+					alert("Your browser does not seem to support getUserMedia, using a fallback video instead.");
+				}
+
+				vid.addEventListener('canplay', enablestart, false);
+
+				function updateMask(id) {
+					currentMask = id;
+					switchMasks();
+				}
+
+				function startVideo() {
+					// start video
+					vid.play();
+					// start tracking
+					ctrack.start(vid);
+					// start drawing face grid
+					drawGridLoop();
+				}
+
+				var positions;
+				var fd = new faceDeformer();
+				fd.init(document.getElementById('webgl'));
+				
+				var currentMask = 0;
+		
+				function drawGridLoop() {
+					// get position of face
+					positions = ctrack.getCurrentPosition(vid);
+					//overlayCC.clearRect(0, 0, 500, 375);
+					if (positions) {
+						// draw current grid
+						//ctrack.draw(overlay);
+					}
+					// check whether mask has converged
+					var pn = ctrack.getConvergence();
+					if (pn < 0.4) {
+						//最初に顔が見つかった！
+						switchMasks();
+						faceAnimID = requestAnimFrame(drawMaskLoop);
+					} else {
+						faceAnimID = requestAnimFrame(drawGridLoop);
+					}
+				}
+					
+				function switchMasks() {
+					// get mask
+
+					var maskname = Object.keys(masks)[currentMask];
+					fd.load(document.getElementById(maskname), masks[maskname], pModel);
+				}
+
+				function stopDraw(){
+					vid.pause();
+					cancelAnimationFrame(faceAnimID)
+				}
+
+				function startDraw(){
+					vid.play();
+					drawGridLoop();
+				}
+				
+				function drawMaskLoop() {
+					// get position of face
+					positions = ctrack.getCurrentPosition();
+					//overlayCC.clearRect(0, 0, 400, 300);
+					fd.clear()
+					if (positions) {
+						// lostしていないときは描画する
+						if(lostCount == tmpLostCount){
+							fd.draw(positions);	
+						}
+					}
+					tmpLostCount = lostCount;
+					faceAnimID = requestAnimFrame(drawMaskLoop);
+				}
+							
+				document.addEventListener("clmtrackrIteration", function(event) {
+					
+				}, false);
+
+				//facetrakerがlostしているか調べる
+				document.addEventListener("clmtrackrLost",function(event){
+					lostCount++;
+					if(lostCount >= 10000){
+						lostCount = 0;
+						tmpLostCount = 0;
+					}
+
+				}, false);
+				function requestFullscreen(target) {
+					if (target.webkitRequestFullscreen) {
+						target.webkitRequestFullscreen(); //Chrome15+, Safari5.1+, Opera15+
+					} else if (target.mozRequestFullScreen) {
+						target.mozRequestFullScreen(); //FF10+
+					} else if (target.msRequestFullscreen) {
+						target.msRequestFullscreen(); //IE11+
+					} else if (target.requestFullscreen) {
+						target.requestFullscreen(); // HTML5 Fullscreen API仕様
+					} else {
+						alert('ご利用のブラウザはフルスクリーン操作に対応していません');
+						return;
+					}
+				}
+
+				//startVideo()	
+			</script>
+		</div>
+		<script type="text/javascript" src="bundle.js"></script>
+	</body>
+</html>

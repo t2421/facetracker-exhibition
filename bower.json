@@ -1,0 +1,12 @@
+{
+  "name": "007_aki-ishibashi-exhibition",
+  "version": "0.0.0",
+  "authors": [
+    "Taiga Kiyotaki <t-kiyotaki@bfp.co.jp>"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "jquery": "~2.1.3",
+    "gsap": "~1.15.0"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "canvas-to-image",
+  "description": "",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "coffee-reactify": "^2.1.0",
+    "coffeeify": "~0.5.1",
+    "grunt-browserify": "~1.2.0",
+    "grunt-coffee-react": "^2.1.0",
+    "grunt-contrib-coffee": "~0.7.0",
+    "grunt-contrib-connect": "~0.3.0",
+    "grunt-contrib-watch": "~0.4.4",
+    "react": "^0.12.2"
+  },
+  "browser": {
+    "jquery": "./bower_components/jquery/dist/jquery.js",
+    "TweenMax":"./bower_components/gsap/src/minified/TweenMax.min.js",
+    "sylvester":"./src/libs/sylvester-min.js"
+  }
+}
